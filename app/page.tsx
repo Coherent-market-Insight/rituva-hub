@@ -41,8 +41,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#fafafa]">
-      {/* Three.js Background - positioned on right side only */}
-      <div className="fixed top-0 right-0 w-1/2 h-full pointer-events-none" style={{ zIndex: 1 }}>
+      {/* Three.js Background - full width, behind all content */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
         <ThreeScene />
       </div>
       {/* Navigation */}

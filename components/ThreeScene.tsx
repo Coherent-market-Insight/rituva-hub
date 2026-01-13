@@ -23,9 +23,9 @@ export default function ThreeScene() {
       let mouseX = 0, mouseY = 0;
       let time = 0;
 
-      // Get container dimensions
-      const width = container.clientWidth || window.innerWidth / 2;
-      const height = container.clientHeight || window.innerHeight;
+      // Get container dimensions - full screen
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
       // Scene setup
       const scene = new THREE.Scene();
@@ -50,32 +50,34 @@ export default function ThreeScene() {
 
       const objects: any[] = [];
 
-      // Floating particles (fewer, positioned center-right)
-      const particleCount = 80;
+      // Floating particles - spread across full screen
+      const particleCount = 120;
       const positions = new Float32Array(particleCount * 3);
       for (let i = 0; i < particleCount; i++) {
-        positions[i * 3] = Math.random() * 30 - 5; // Right side bias
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 30;
+        positions[i * 3] = (Math.random() - 0.5) * 80;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 40 - 10; // Push back
       }
       const particlesGeometry = new THREE.BufferGeometry();
       particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.1,
-        color: 0xaaaaaa,
+        size: 0.08,
+        color: 0xbbbbbb,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.4,
         sizeAttenuation: true
       });
       const particles = new THREE.Points(particlesGeometry, particlesMaterial);
       scene.add(particles);
 
-      // Wireframe shapes - positioned on right side only
+      // Wireframe shapes - spread across but pushed back (negative z)
       const shapeConfigs = [
-        { type: 'icosahedron', size: 1.2, pos: [8, 6, -5] },
-        { type: 'octahedron', size: 0.9, pos: [12, -8, -3] },
-        { type: 'dodecahedron', size: 0.7, pos: [5, -4, 2] },
-        { type: 'tetrahedron', size: 1.0, pos: [15, 2, -8] },
+        { type: 'icosahedron', size: 1.0, pos: [18, 8, -15] },
+        { type: 'octahedron', size: 0.8, pos: [-15, -10, -12] },
+        { type: 'dodecahedron', size: 0.6, pos: [20, -6, -18] },
+        { type: 'tetrahedron', size: 0.9, pos: [-18, 6, -14] },
+        { type: 'icosahedron', size: 0.7, pos: [10, 12, -20] },
+        { type: 'octahedron', size: 0.6, pos: [-10, -12, -16] },
       ];
       
       shapeConfigs.forEach((config) => {
@@ -90,12 +92,12 @@ export default function ThreeScene() {
         const edges = new THREE.EdgesGeometry(geo);
         const line = new THREE.LineSegments(
           edges,
-          new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.3 })
+          new THREE.LineBasicMaterial({ color: 0xaaaaaa, transparent: true, opacity: 0.2 })
         );
         line.position.set(config.pos[0], config.pos[1], config.pos[2]);
         line.userData = {
-          rotSpeed: { x: 0.003 + Math.random() * 0.005, y: 0.004 + Math.random() * 0.005 },
-          floatSpeed: 0.3 + Math.random() * 0.4,
+          rotSpeed: { x: 0.002 + Math.random() * 0.004, y: 0.003 + Math.random() * 0.004 },
+          floatSpeed: 0.2 + Math.random() * 0.3,
           floatOffset: Math.random() * Math.PI * 2,
           originalY: config.pos[1]
         };
@@ -103,24 +105,24 @@ export default function ThreeScene() {
         objects.push(line);
       });
 
-      // Light spheres (bokeh-like) - right side
-      for (let i = 0; i < 8; i++) {
-        const size = 0.2 + Math.random() * 0.3;
+      // Soft spheres (bokeh-like) - spread across, pushed back
+      for (let i = 0; i < 12; i++) {
+        const size = 0.2 + Math.random() * 0.4;
         const sphereGeo = new THREE.SphereGeometry(size, 12, 12);
-        const grayValue = 0.6 + Math.random() * 0.3;
+        const grayValue = 0.75 + Math.random() * 0.2;
         const sphereMat = new THREE.MeshBasicMaterial({
           color: new THREE.Color(grayValue, grayValue, grayValue),
           transparent: true,
-          opacity: 0.2 + Math.random() * 0.15
+          opacity: 0.15 + Math.random() * 0.1
         });
         const sphere = new THREE.Mesh(sphereGeo, sphereMat);
         sphere.position.set(
-          Math.random() * 25,
-          (Math.random() - 0.5) * 30,
-          (Math.random() - 0.5) * 20
+          (Math.random() - 0.5) * 50,
+          (Math.random() - 0.5) * 35,
+          (Math.random() - 0.5) * 20 - 15 // Push back
         );
         sphere.userData = {
-          floatSpeed: 0.2 + Math.random() * 0.3,
+          floatSpeed: 0.15 + Math.random() * 0.25,
           floatOffset: Math.random() * Math.PI * 2,
           floatAmplitude: 0.5 + Math.random() * 1,
           originalY: sphere.position.y,
@@ -130,25 +132,25 @@ export default function ThreeScene() {
         objects.push(sphere);
       }
 
-      // Rings - right side
-      for (let i = 0; i < 3; i++) {
-        const ringGeo = new THREE.TorusGeometry(0.5 + Math.random() * 0.5, 0.03, 8, 32);
+      // Rings - spread across, pushed back
+      for (let i = 0; i < 4; i++) {
+        const ringGeo = new THREE.TorusGeometry(0.4 + Math.random() * 0.4, 0.02, 8, 32);
         const ringMat = new THREE.MeshBasicMaterial({
-          color: 0x999999,
+          color: 0xaaaaaa,
           transparent: true,
-          opacity: 0.2
+          opacity: 0.15
         });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         ring.position.set(
-          5 + Math.random() * 15,
-          (Math.random() - 0.5) * 20,
-          (Math.random() - 0.5) * 15
+          (Math.random() - 0.5) * 45,
+          (Math.random() - 0.5) * 30,
+          (Math.random() - 0.5) * 15 - 12 // Push back
         );
         ring.rotation.x = Math.random() * Math.PI;
         ring.rotation.y = Math.random() * Math.PI;
         ring.userData = {
-          rotSpeed: { x: 0.002 + Math.random() * 0.004, y: 0.003 + Math.random() * 0.004 },
-          floatSpeed: 0.25 + Math.random() * 0.3,
+          rotSpeed: { x: 0.002 + Math.random() * 0.003, y: 0.002 + Math.random() * 0.003 },
+          floatSpeed: 0.2 + Math.random() * 0.25,
           floatOffset: Math.random() * Math.PI * 2,
           originalY: ring.position.y
         };
@@ -174,11 +176,9 @@ export default function ThreeScene() {
 
       // Resize handler
       const handleResize = () => {
-        const newWidth = container.clientWidth || window.innerWidth / 2;
-        const newHeight = container.clientHeight || window.innerHeight;
-        camera.aspect = newWidth / newHeight;
+        camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(newWidth, newHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight);
       };
       window.addEventListener('resize', handleResize);
 
@@ -234,7 +234,7 @@ export default function ThreeScene() {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 pointer-events-none"
+      className="fixed inset-0 pointer-events-none"
     />
   );
 }
