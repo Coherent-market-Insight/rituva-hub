@@ -5,13 +5,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, LayoutGrid, Filter, Send } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-// Dynamically import Three.js component to avoid SSR issues
-const ThreeScene = dynamic(() => import('@/components/ThreeScene'), {
-  ssr: false,
-  loading: () => null,
-});
 
 export default function Home() {
   const router = useRouter();
@@ -40,9 +33,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Three.js Background - renders at z-index 0 */}
-      <ThreeScene />
+    <div className="min-h-screen relative overflow-hidden bg-[#fafafa]">
       {/* Navigation */}
       <header className="border-b border-black/5 bg-[#fafafa]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
