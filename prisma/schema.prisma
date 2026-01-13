@@ -1,0 +1,292 @@
+// This is your Prisma schema file
+// Using Turso (libSQL) for both local and production
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// NOTE: SQLite doesn't support native enums
+// We use String with @db.Text instead
+// Values are validated in application code
+
+// Core Models
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  password_hash     String
+  full_name         String?
+  avatar_url        String?
+  role              String             @default("user") // UserRole: super_admin, user
+  user_role         String?            // UserRole: account_manager, project_manager, admin, user
+  team              String?            // Team: website_development, artificial_intelligence, market_research, digital_marketing, human_resources
+  is_email_verified Boolean            @default(false)
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+
+  // Relations
+  workspaces       WorkspaceMember[]
+  projects         Project[]          @relation("ProjectOwner")
+  project_members  ProjectMember[]
+  tasks_created    Task[]             @relation("TaskCreator")
+  tasks_assigned   Task[]             @relation("TaskAssignee")
+  task_comments    TaskComment[]
+  messages_sent    Message[]          @relation("MessageSender")
+  activity_logs    ActivityLog[]
+  notifications    Notification[]
+  api_keys         ApiKey[]
+  audit_logs       AuditLog[]
+
+  @@map("users")
+}
+
+// Workspace - groups multiple projects
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  avatar_url  String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  members      WorkspaceMember[]
+  projects     Project[]
+  activity_logs ActivityLog[]
+
+  @@map("workspaces")
+}
+
+// Workspace Membership with roles
+model WorkspaceMember {
+  id           String        @id @default(cuid())
+  workspace_id String
+  user_id      String
+  role         String        @default("member") // WorkspaceRole: owner, admin, member
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  // Relations
+  workspace Workspace @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([workspace_id, user_id])
+  @@map("workspace_members")
+}
+
+// Project Model
+model Project {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  slug         String   @unique
+  workspace_id String
+  owner_id     String
+  color        String?  @default("#3B82F6")
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  // Relations
+  workspace      Workspace       @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
+  owner          User            @relation("ProjectOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  members        ProjectMember[]
+  boards         Board[]
+  activity_logs  ActivityLog[]
+  api_keys       ApiKey[]
+
+  @@map("projects")
+}
+
+// Project Membership with roles
+model ProjectMember {
+  id         String      @id @default(cuid())
+  project_id String
+  user_id    String
+  role       String      @default("member") // ProjectRole: owner, lead, manager, member
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+
+  // Relations
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, user_id])
+  @@map("project_members")
+}
+
+// Board - similar to columns in Kanba
+model Board {
+  id         String   @id @default(cuid())
+  name       String
+  project_id String
+  position   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@map("boards")
+}
+
+// Task Model
+model Task {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  board_id     String
+  position     Int
+  priority     String      @default("medium") // TaskPriority: low, medium, high, urgent
+  status       String      @default("pending") // TaskStatus: pending, completed
+  team         String?     // Team: website_development, artificial_intelligence, market_research, digital_marketing, human_resources
+  month        String?     // Month: January, February, etc.
+  week         String?     // Week: Week 1 (Dec 28 - Jan 3), etc.
+  notes        String?     // Additional notes
+  due_date     DateTime?
+  created_by   String?
+  assigned_to  String?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  // Relations
+  board        Board         @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  creator      User?         @relation("TaskCreator", fields: [created_by], references: [id])
+  assignee     User?         @relation("TaskAssignee", fields: [assigned_to], references: [id])
+  comments     TaskComment[]
+  messages     Message[]
+
+  @@map("tasks")
+}
+
+// Task Comments
+model TaskComment {
+  id         String   @id @default(cuid())
+  task_id    String
+  user_id    String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+// Team Chat Messages
+model Message {
+  id           String   @id @default(cuid())
+  content      String
+  team         String?  // Team filter - messages can be team-specific or general
+  sender_id    String
+  task_id      String?  // Optional: if message is about/clipped to a task
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  // Relations
+  sender       User     @relation("MessageSender", fields: [sender_id], references: [id], onDelete: Cascade)
+  task         Task?    @relation(fields: [task_id], references: [id], onDelete: SetNull)
+
+  @@index([team, created_at])
+  @@index([task_id])
+  @@map("messages")
+}
+
+// Activity Log for audit trail
+model ActivityLog {
+  id           String   @id @default(cuid())
+  workspace_id String?
+  project_id   String?
+  user_id      String
+  action       String   // created, updated, deleted, assigned, etc.
+  entity_type  String   // Task, Project, Board, Member
+  entity_id    String?
+  details      String?  // JSON serialized as string for SQLite compatibility
+  created_at   DateTime @default(now())
+
+  // Relations
+  workspace Workspace? @relation(fields: [workspace_id], references: [id], onDelete: SetNull)
+  project   Project?   @relation(fields: [project_id], references: [id], onDelete: SetNull)
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("activity_logs")
+}
+
+// Audit Log for sensitive operations
+model AuditLog {
+  id           String   @id @default(cuid())
+  user_id      String
+  action       String
+  resource     String
+  resource_id  String
+  changes      String?  // JSON serialized as string for SQLite compatibility
+  ip_address   String?
+  user_agent   String?
+  status       String   @default("success") // success, failure
+  error_message String?
+  created_at   DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
+
+// Notifications
+model Notification {
+  id         String   @id @default(cuid())
+  user_id    String
+  title      String
+  message    String
+  type       String   // task_assigned, comment_added, member_invited, etc.
+  read       Boolean  @default(false)
+  data       String?  // JSON serialized as string for SQLite compatibility
+  created_at DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// API Keys for integration
+model ApiKey {
+  id          String   @id @default(cuid())
+  user_id     String
+  project_id  String?
+  name        String
+  key         String   @unique
+  secret      String   @unique
+  is_active   Boolean  @default(true)
+  last_used   DateTime?
+  created_at  DateTime @default(now())
+  expires_at  DateTime?
+
+  // Relations
+  user    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [project_id], references: [id], onDelete: SetNull)
+
+  @@map("api_keys")
+}
+
+// OTP for email verification
+model OTP {
+  id        String   @id @default(cuid())
+  email     String
+  code      String   // 6-digit OTP
+  purpose   String   @default("signup") // signup, password_reset, etc.
+  is_used   Boolean  @default(false)
+  created_at DateTime @default(now())
+  expires_at DateTime // 10 minutes from creation
+
+  @@map("otps")
+}
