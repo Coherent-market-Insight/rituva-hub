@@ -7,11 +7,14 @@ import { toast } from 'sonner';
 import { Users } from 'lucide-react';
 
 const teams = [
-  { value: 'website_development', label: 'Website Development' },
-  { value: 'artificial_intelligence', label: 'Artificial Intelligence' },
-  { value: 'market_research', label: 'Market Research' },
+  { value: 'consulting_advisory', label: 'Consulting and Advisory' },
   { value: 'digital_marketing', label: 'Digital Marketing' },
-  { value: 'human_resources', label: 'Human Resources' },
+  { value: 'brand_positioning', label: 'Brand Positioning & Thought Leadership' },
+  { value: 'marketing_technology', label: 'Marketing Technology Integration & Analytics' },
+  { value: 'artificial_intelligence', label: 'Artificial Intelligence Integration' },
+  { value: 'content_marketing', label: 'Content Marketing and Strategy' },
+  { value: 'hr_consulting', label: 'HR Consulting' },
+  { value: 'it_infrastructure', label: 'IT Infrastructure Consulting' },
 ];
 
 export default function SelectTeamPage() {

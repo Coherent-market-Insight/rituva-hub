@@ -78,3 +78,4 @@ Write-Host "To view your database:" -ForegroundColor Yellow
 Write-Host "    npm run db:studio" -ForegroundColor Cyan
 Write-Host ""
 
+

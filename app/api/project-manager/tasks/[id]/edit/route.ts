@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { successResponse, unauthorizedResponse, errorResponse, forbiddenResponse, notFoundResponse } from '@/lib/api-response';
+import { successResponse, unauthorizedResponse, errorResponse, forbiddenResponse } from '@/lib/api-response';
 
-export async function POST(
+export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -21,12 +21,14 @@ export async function POST(
       return unauthorizedResponse('User not found');
     }
 
-    // Check if user is client
-    if (userData.user_role !== 'client') {
-      return forbiddenResponse('Only clients can mark tasks as done');
+    // Check if user is project manager
+    if (userData.user_role !== 'project_manager') {
+      return forbiddenResponse('Only project managers can edit tasks');
     }
 
     const taskId = params.id;
+    const body = await request.json();
+    const { title, description, notes } = body;
 
     // Get the task
     const task = await prisma.task.findUnique({
@@ -34,19 +36,22 @@ export async function POST(
     });
 
     if (!task) {
-      return notFoundResponse('Task not found');
+      return errorResponse('Task not found', 404);
     }
 
-    // Verify task status is push_to_client
-    if (task.status !== 'push_to_client') {
-      return errorResponse('Task must be in "Push to Client" status to mark as done', 400);
+    // Project managers can edit tasks that are: push_to_project_manager
+    if (task.status !== 'push_to_project_manager') {
+      return errorResponse('Only tasks pushed to project manager can be edited', 400);
     }
 
-    // Update task status to client_completed
+    // Update task
     const updatedTask = await prisma.task.update({
       where: { id: taskId },
       data: {
-        status: 'client_completed',
+        title: title || task.title,
+        description: description !== undefined ? description : task.description,
+        notes: notes !== undefined ? notes : task.notes,
+        updated_at: new Date(),
       },
       include: {
         creator: {
@@ -63,23 +68,13 @@ export async function POST(
             full_name: true,
           },
         },
-        board: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     });
 
-    return successResponse(updatedTask, 'Task marked as done successfully');
-  } catch (error: any) {
-    console.error('[MARK_TASK_DONE]', error);
-    if (error.code === 'P2025') {
-      return errorResponse('Task not found', 404);
-    }
-    return errorResponse(error.message || 'Internal server error', 500);
+    return successResponse(updatedTask, 'Task updated successfully');
+  } catch (error) {
+    console.error('[EDIT_PM_TASK]', error);
+    return errorResponse('Internal server error', 500);
   }
 }
-
 

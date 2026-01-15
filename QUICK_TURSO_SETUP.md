@@ -60,3 +60,4 @@ If you get errors:
 2. Make sure AUTH_TOKEN is the full token string
 3. Check Vercel logs: https://vercel.com/dashboard → Your Project → Deployments
 
+

@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse('Only account managers can access this endpoint');
     }
 
-    // Account Manager sees tasks pushed to them AND tasks they've acted on
-    // This allows AM to track all their tasks through the workflow
+    // Account Manager sees tasks pushed by PM (push_to_account_manager)
+    // and tracks tasks they've pushed to client (push_to_client, client_completed)
     const tasks = await prisma.task.findMany({
       where: {
         status: {
-          in: ['push_to_account_manager', 'push_to_client', 'sent_for_review', 'client_completed'],
+          in: ['push_to_account_manager', 'push_to_client', 'client_completed'],
         },
       },
       include: {

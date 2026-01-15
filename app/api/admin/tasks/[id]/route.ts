@@ -21,9 +21,9 @@ export async function PUT(
       return unauthorizedResponse('User not found');
     }
 
-    // Check if user is admin
+    // Check if user is supervisor
     if (userData.user_role !== 'admin') {
-      return forbiddenResponse('Only admins can update tasks');
+      return forbiddenResponse('Only supervisors can update tasks');
     }
 
     const taskId = params.id;
@@ -108,9 +108,9 @@ export async function DELETE(
       return unauthorizedResponse('User not found');
     }
 
-    // Check if user is admin
+    // Check if user is supervisor
     if (userData.user_role !== 'admin') {
-      return forbiddenResponse('Only admins can delete tasks');
+      return forbiddenResponse('Only supervisors can delete tasks');
     }
 
     const taskId = params.id;
@@ -143,4 +143,5 @@ export async function DELETE(
     return errorResponse(error.message || 'Internal server error', 500);
   }
 }
+
 

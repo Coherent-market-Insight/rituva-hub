@@ -354,3 +354,4 @@ Once you verify your email:
 
 Visit: **http://localhost:3000/auth/signup**
 
+

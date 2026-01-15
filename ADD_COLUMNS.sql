@@ -6,3 +6,4 @@ ALTER TABLE users ADD COLUMN user_role TEXT;
 -- Add team column  
 ALTER TABLE users ADD COLUMN team TEXT;
 
+

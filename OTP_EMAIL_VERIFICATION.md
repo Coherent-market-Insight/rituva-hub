@@ -459,3 +459,4 @@ curl -X POST http://localhost:3003/api/auth/resend-otp \
 
 **Visit** http://localhost:3003/auth/signup **to try it out!** 🎯
 
+

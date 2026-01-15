@@ -21,9 +21,9 @@ export async function POST(
       return unauthorizedResponse('User not found');
     }
 
-    // Check if user is admin
+    // Check if user is supervisor
     if (userData.user_role !== 'admin') {
-      return forbiddenResponse('Only admins can assign tasks');
+      return forbiddenResponse('Only supervisors can assign tasks');
     }
 
     if (!userData.team) {
@@ -102,4 +102,5 @@ export async function POST(
     return errorResponse(error.message || 'Internal server error', 500);
   }
 }
+
 

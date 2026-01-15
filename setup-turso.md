@@ -82,3 +82,4 @@ vercel --prod
 
 Your database is now configured and the app should work without errors!
 
+

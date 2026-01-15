@@ -396,3 +396,4 @@ DATABASE_AUTH_TOKEN=xxxxx
 
 **Ready to test?** Go to http://localhost:3000/auth/signup now! 🎉
 
+

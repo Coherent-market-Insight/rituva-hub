@@ -3,7 +3,10 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { successResponse, unauthorizedResponse, errorResponse, forbiddenResponse } from '@/lib/api-response';
 
-export async function GET(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     const user = await getCurrentUser();
     if (!user) return unauthorizedResponse();
@@ -20,16 +23,31 @@ export async function GET(request: NextRequest) {
 
     // Check if user is project manager
     if (userData.user_role !== 'project_manager') {
-      return forbiddenResponse('Only project managers can access this endpoint');
+      return forbiddenResponse('Only project managers can push tasks to account manager');
     }
 
-    // Project Manager sees tasks pushed by admin (push_to_project_manager)
-    // and tracks tasks they've pushed to AM (push_to_account_manager, push_to_client, client_completed)
-    const tasks = await prisma.task.findMany({
-      where: {
-        status: {
-          in: ['push_to_project_manager', 'push_to_account_manager', 'push_to_client', 'client_completed'],
-        },
+    const taskId = params.id;
+
+    // Get the task
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      return errorResponse('Task not found', 404);
+    }
+
+    // Project managers can push tasks that are: push_to_project_manager
+    if (task.status !== 'push_to_project_manager') {
+      return errorResponse('Only tasks pushed to project manager can be forwarded to account manager', 400);
+    }
+
+    // Update task status to push_to_account_manager
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        status: 'push_to_account_manager',
+        updated_at: new Date(),
       },
       include: {
         creator: {
@@ -46,21 +64,12 @@ export async function GET(request: NextRequest) {
             full_name: true,
           },
         },
-        board: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        updated_at: 'desc', // Show most recently updated first
       },
     });
 
-    return successResponse(tasks);
+    return successResponse(updatedTask, 'Task pushed to account manager successfully');
   } catch (error) {
-    console.error('[GET_PROJECT_MANAGER_TASKS]', error);
+    console.error('[PUSH_TO_AM]', error);
     return errorResponse('Internal server error', 500);
   }
 }

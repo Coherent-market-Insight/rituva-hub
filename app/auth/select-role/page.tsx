@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 const roles = [
   { value: 'account_manager', label: 'Account Manager' },
   { value: 'project_manager', label: 'Project Manager' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'user', label: 'User' },
+  { value: 'admin', label: 'Supervisor' },
+  { value: 'user', label: 'Executioner' },
 ];
 
 export default function SelectRolePage() {

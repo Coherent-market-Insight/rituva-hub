@@ -24,8 +24,8 @@ model User {
   full_name         String?
   avatar_url        String?
   role              String             @default("user") // UserRole: super_admin, user
-  user_role         String?            // UserRole: account_manager, project_manager, admin, user
-  team              String?            // Team: website_development, artificial_intelligence, market_research, digital_marketing, human_resources
+  user_role         String?            // UserRole: account_manager, project_manager, admin (Supervisor), user (Executioner)
+  team              String?            // Team: consulting_advisory, digital_marketing, brand_positioning, marketing_technology, artificial_intelligence, content_marketing, hr_consulting, it_infrastructure
   is_email_verified Boolean            @default(false)
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt

@@ -44,11 +44,14 @@ interface TeamUser {
 }
 
 const teams = [
-  { value: 'website_development', label: 'Website Development' },
-  { value: 'artificial_intelligence', label: 'Artificial Intelligence' },
-  { value: 'market_research', label: 'Market Research' },
+  { value: 'consulting_advisory', label: 'Consulting and Advisory' },
   { value: 'digital_marketing', label: 'Digital Marketing' },
-  { value: 'human_resources', label: 'Human Resources' },
+  { value: 'brand_positioning', label: 'Brand Positioning & Thought Leadership' },
+  { value: 'marketing_technology', label: 'Marketing Technology Integration & Analytics' },
+  { value: 'artificial_intelligence', label: 'Artificial Intelligence Integration' },
+  { value: 'content_marketing', label: 'Content Marketing and Strategy' },
+  { value: 'hr_consulting', label: 'HR Consulting' },
+  { value: 'it_infrastructure', label: 'IT Infrastructure Consulting' },
 ];
 
 const months = [
@@ -73,12 +76,10 @@ export default function AdminConsolePage() {
   const [user, setUser] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [reviewFromAccountManagerTasks, setReviewFromAccountManagerTasks] = useState<Task[]>([]);
-  const [reviewFromProjectManagerTasks, setReviewFromProjectManagerTasks] = useState<Task[]>([]);
   const [teamUsers, setTeamUsers] = useState<TeamUser[]>([]);
   
   // Tab state
-  const [activeTab, setActiveTab] = useState<'homepage' | 'review-from-am' | 'review-from-pm'>('homepage');
+  const [activeTab, setActiveTab] = useState<'homepage'>('homepage');
   
   // View state
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
@@ -94,7 +95,7 @@ export default function AdminConsolePage() {
   const [taskDescription, setTaskDescription] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [selectedWeek, setSelectedWeek] = useState('');
-  const [taskStatus, setTaskStatus] = useState<'assigned' | 'push_to_account_manager'>('assigned');
+  const [taskStatus, setTaskStatus] = useState<'assigned' | 'push_to_project_manager'>('assigned');
   const [taskNotes, setTaskNotes] = useState('');
   const [assignedToUserIds, setAssignedToUserIds] = useState<string[]>([]);
   
@@ -110,24 +111,9 @@ export default function AdminConsolePage() {
   useEffect(() => {
     if (user) {
       fetchTasks();
-      fetchReviewFromAccountManagerTasks();
-      fetchReviewFromProjectManagerTasks();
       fetchTeamUsers();
     }
   }, [user]);
-
-  useEffect(() => {
-    // Refetch tasks when tab changes
-    if (user) {
-      if (activeTab === 'homepage') {
-        fetchTasks();
-      } else if (activeTab === 'review-from-am') {
-        fetchReviewFromAccountManagerTasks();
-      } else if (activeTab === 'review-from-pm') {
-        fetchReviewFromProjectManagerTasks();
-      }
-    }
-  }, [activeTab, user]);
 
   const fetchUser = async () => {
     try {
@@ -176,30 +162,6 @@ export default function AdminConsolePage() {
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
-    }
-  };
-
-  const fetchReviewFromAccountManagerTasks = async () => {
-    try {
-      const res = await fetch('/api/admin/tasks/review-from-account-manager');
-      if (res.ok) {
-        const data = await res.json();
-        setReviewFromAccountManagerTasks(data.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch review tasks from account manager:', error);
-    }
-  };
-
-  const fetchReviewFromProjectManagerTasks = async () => {
-    try {
-      const res = await fetch('/api/admin/tasks/review-from-project-manager');
-      if (res.ok) {
-        const data = await res.json();
-        setReviewFromProjectManagerTasks(data.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch review tasks from project manager:', error);
     }
   };
 
@@ -271,8 +233,6 @@ export default function AdminConsolePage() {
       resetCreateTaskForm();
       setShowCreateTask(false);
       await fetchTasks();
-      await fetchReviewFromAccountManagerTasks();
-      await fetchReviewFromProjectManagerTasks();
     } catch (error) {
       console.error('Failed to create task:', error);
       toast.error('An error occurred');
@@ -287,7 +247,7 @@ export default function AdminConsolePage() {
     setTaskDescription(task.description || '');
     setSelectedMonth(task.month || '');
     setSelectedWeek(task.week || '');
-    setTaskStatus(task.status === 'push_to_account_manager' ? 'push_to_account_manager' : 'assigned');
+    setTaskStatus(task.status === 'push_to_project_manager' ? 'push_to_project_manager' : 'assigned');
     setTaskNotes(task.notes || '');
     // Parse assigned_to if it's comma-separated
     if (task.assigned_to) {
@@ -334,8 +294,6 @@ export default function AdminConsolePage() {
       setEditingTask(null);
       setShowCreateTask(false);
       await fetchTasks();
-      await fetchReviewFromAccountManagerTasks();
-      await fetchReviewFromProjectManagerTasks();
     } catch (error) {
       console.error('Failed to update task:', error);
       toast.error('An error occurred');
@@ -364,8 +322,6 @@ export default function AdminConsolePage() {
 
       toast.success('Task deleted successfully');
       await fetchTasks();
-      await fetchReviewFromAccountManagerTasks();
-      await fetchReviewFromProjectManagerTasks();
     } catch (error) {
       console.error('Failed to delete task:', error);
       toast.error('An error occurred');
@@ -474,7 +430,7 @@ export default function AdminConsolePage() {
   // Calculate KPI metrics
   const totalTasks = tasks.length;
   const assignedTasks = tasks.filter(t => t.status === 'assigned' || t.status === 'work_in_progress' || t.status === 'pending' || t.status === 'sent_for_review').length;
-  const pushToAMTasks = tasks.filter(t => t.status === 'push_to_account_manager' || t.status === 'push_to_client').length;
+  const pushToPMTasks = tasks.filter(t => t.status === 'push_to_project_manager' || t.status === 'push_to_account_manager' || t.status === 'push_to_client').length;
   const completedTasks = tasks.filter(t => t.status === 'completed' || t.status === 'client_completed').length;
   const unassignedTasks = tasks.filter(t => !t.assigned_to || t.assigned_to.trim() === '').length;
 
@@ -492,9 +448,9 @@ export default function AdminConsolePage() {
       <header className="border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Project Hub - Admin Console</h1>
+            <h1 className="text-2xl font-bold">Project Hub - Supervisor Console</h1>
             <p className="text-sm text-muted-foreground">
-              {user?.team ? `${getTeamLabel(user.team)} Team` : 'Admin Console'}
+              {user?.team ? `${getTeamLabel(user.team)} Team` : 'Supervisor Console'}
             </p>
           </div>
           <Button variant="ghost" onClick={handleLogout}>
@@ -506,42 +462,7 @@ export default function AdminConsolePage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b">
-          <button
-            onClick={() => setActiveTab('homepage')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-              activeTab === 'homepage'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Homepage
-          </button>
-          <button
-            onClick={() => setActiveTab('review-from-am')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-              activeTab === 'review-from-am'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Review from Account Manager ({reviewFromAccountManagerTasks.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('review-from-pm')}
-            className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-              activeTab === 'review-from-pm'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            Review from Project Manager ({reviewFromProjectManagerTasks.length})
-          </button>
-        </div>
-
-        {/* Homepage Tab */}
-        {activeTab === 'homepage' && (
+        {/* Main Content */}
           <>
             <div className="mb-8 flex items-center justify-between">
               <div>
@@ -599,8 +520,8 @@ export default function AdminConsolePage() {
           <div className="bg-card border rounded-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Push to AM</p>
-                <p className="text-3xl font-bold">{pushToAMTasks}</p>
+                <p className="text-sm text-muted-foreground mb-1">Push to PM</p>
+                <p className="text-3xl font-bold">{pushToPMTasks}</p>
               </div>
               <div className="w-12 h-12 rounded-full flex items-center justify-center border border-border">
                 <Upload className="w-6 h-6 text-foreground" />
@@ -751,16 +672,16 @@ export default function AdminConsolePage() {
                   </div>
                 </div>
 
-                {/* Push to Account Manager Column */}
+                {/* Push to Project Manager Column */}
                 <div className="bg-card border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-sm">Push to Account Manager</h3>
+                    <h3 className="font-semibold text-sm">Push to Project Manager</h3>
                     <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
-                      {tasks.filter(t => t.status === 'push_to_account_manager' || t.status === 'push_to_client').length}
+                      {tasks.filter(t => t.status === 'push_to_project_manager' || t.status === 'push_to_account_manager' || t.status === 'push_to_client').length}
                     </span>
                   </div>
                   <div className="space-y-3 min-h-[200px]">
-                    {tasks.filter(t => t.status === 'push_to_account_manager' || t.status === 'push_to_client').map((task) => (
+                    {tasks.filter(t => t.status === 'push_to_project_manager' || t.status === 'push_to_account_manager' || t.status === 'push_to_client').map((task) => (
                       <div
                         key={task.id}
                         className="bg-background border rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer"
@@ -804,75 +725,7 @@ export default function AdminConsolePage() {
                         </div>
                       </div>
                     ))}
-                    {tasks.filter(t => t.status === 'push_to_account_manager' || t.status === 'push_to_client').length === 0 && (
-                      <p className="text-xs text-muted-foreground text-center py-8">No tasks</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Needs Review Column - Tasks sent back by AM or PM */}
-                <div className="bg-card border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-sm">Needs Review</h3>
-                    <span className="text-xs bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 px-2 py-1 rounded">
-                      {tasks.filter(t => t.status === 'sent_for_review' || t.status === 'sent_for_review_by_pm').length}
-                    </span>
-                  </div>
-                  <div className="space-y-3 min-h-[200px]">
-                    {tasks.filter(t => t.status === 'sent_for_review' || t.status === 'sent_for_review_by_pm').map((task) => (
-                      <div
-                        key={task.id}
-                        className="bg-background border rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-orange-400"
-                      >
-                        <div className="flex items-center gap-1 mb-1">
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${
-                            task.status === 'sent_for_review' 
-                              ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                              : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                          }`}>
-                            {task.status === 'sent_for_review' ? 'From AM' : 'From PM'}
-                          </span>
-                        </div>
-                        <h4 className="font-medium text-sm mb-2">{task.title}</h4>
-                        {task.description && (
-                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {task.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {task.month && (
-                            <span className="text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-1.5 py-0.5 rounded">
-                              {task.month}
-                            </span>
-                          )}
-                          {task.week && (
-                            <span className="text-xs bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-1.5 py-0.5 rounded">
-                              {task.week}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditTask(task)}
-                            className="h-6 w-6"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteTask(task.id)}
-                            disabled={deletingTaskId === task.id}
-                            className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {tasks.filter(t => t.status === 'sent_for_review' || t.status === 'sent_for_review_by_pm').length === 0 && (
+                    {tasks.filter(t => t.status === 'push_to_project_manager' || t.status === 'push_to_account_manager' || t.status === 'push_to_client').length === 0 && (
                       <p className="text-xs text-muted-foreground text-center py-8">No tasks</p>
                     )}
                   </div>
@@ -1042,253 +895,7 @@ export default function AdminConsolePage() {
               </div>
             )}
           </>
-        )}
 
-        {/* Review from Account Manager Tab */}
-        {activeTab === 'review-from-am' && (
-          <>
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold">Review Tasks from Account Manager</h2>
-              <p className="text-muted-foreground mt-2">Tasks sent back for review by account manager</p>
-            </div>
-
-            {reviewFromAccountManagerTasks.length === 0 ? (
-              <div className="bg-card border-2 border-dashed rounded-lg p-12 text-center">
-                <p className="text-muted-foreground">No tasks sent for review from account manager</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reviewFromAccountManagerTasks.map((task) => (
-                  <div key={task.id} className="bg-card border rounded-lg p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">{task.title}</h3>
-                            {task.description && (
-                              <p className="text-muted-foreground mb-3">{task.description}</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 items-center mb-3">
-                          {task.team && (
-                            <span className="text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
-                              {getTeamLabel(task.team)}
-                            </span>
-                          )}
-                          {task.month && (
-                            <span className="text-sm bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-2 py-1 rounded">
-                              {task.month}
-                            </span>
-                          )}
-                          {task.week && (
-                            <span className="text-sm bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-2 py-1 rounded">
-                              {task.week}
-                            </span>
-                          )}
-                          <span className={`text-sm px-2 py-1 rounded ${getStatusColor(task.status)}`}>
-                            {getStatusLabel(task.status)}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Created by</p>
-                          <p className="text-sm font-medium">
-                                {task.creator?.full_name || task.creator?.email || 'Unknown'}
-                          </p>
-                        </div>
-                      </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Assigned to</p>
-                              <div className="text-sm font-medium">
-                                {(() => {
-                                  const assignedUsers = getAssignedUsers(task);
-                                  if (assignedUsers.length === 0) {
-                                    return <span>Unassigned</span>;
-                                  }
-                                  if (assignedUsers.length === 1) {
-                                    return <span>{assignedUsers[0].full_name || assignedUsers[0].email}</span>;
-                                  }
-                                  return (
-                                    <div>
-                                      {assignedUsers.map((user, idx) => (
-                                        <span key={user.id}>
-                                          {user.full_name || user.email}
-                                          {idx < assignedUsers.length - 1 && ', '}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                    </div>
-
-                    {task.notes && (
-                      <div className="mt-3 p-3 bg-muted rounded">
-                        <p className="text-sm text-muted-foreground">{task.notes}</p>
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-3">
-                      Created {new Date(task.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditTask(task)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteTask(task.id)}
-                          disabled={deletingTaskId === task.id}
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Review from Project Manager Tab */}
-        {activeTab === 'review-from-pm' && (
-          <>
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold">Review Tasks from Project Manager</h2>
-              <p className="text-muted-foreground mt-2">Tasks sent back for review by project manager</p>
-            </div>
-
-            {reviewFromProjectManagerTasks.length === 0 ? (
-              <div className="bg-card border-2 border-dashed rounded-lg p-12 text-center">
-                <p className="text-muted-foreground">No tasks sent for review from project manager</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reviewFromProjectManagerTasks.map((task) => (
-                  <div key={task.id} className="bg-card border rounded-lg p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">{task.title}</h3>
-                            {task.description && (
-                              <p className="text-muted-foreground mb-3">{task.description}</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 items-center mb-3">
-                          {task.team && (
-                            <span className="text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
-                              {getTeamLabel(task.team)}
-                            </span>
-                          )}
-                          {task.month && (
-                            <span className="text-sm bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-2 py-1 rounded">
-                              {task.month}
-                            </span>
-                          )}
-                          {task.week && (
-                            <span className="text-sm bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 px-2 py-1 rounded">
-                              {task.week}
-                            </span>
-                          )}
-                          <span className={`text-sm px-2 py-1 rounded ${getStatusColor(task.status)}`}>
-                            {getStatusLabel(task.status)}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 mb-3">
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Created by</p>
-                              <p className="text-sm font-medium">
-                                {task.creator?.full_name || task.creator?.email || 'Unknown'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Assigned to</p>
-                              <div className="text-sm font-medium">
-                                {(() => {
-                                  const assignedUsers = getAssignedUsers(task);
-                                  if (assignedUsers.length === 0) {
-                                    return <span>Unassigned</span>;
-                                  }
-                                  if (assignedUsers.length === 1) {
-                                    return <span>{assignedUsers[0].full_name || assignedUsers[0].email}</span>;
-                                  }
-                                  return (
-                                    <div>
-                                      {assignedUsers.map((user, idx) => (
-                                        <span key={user.id}>
-                                          {user.full_name || user.email}
-                                          {idx < assignedUsers.length - 1 && ', '}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  );
-                                })()}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {task.notes && (
-                          <div className="mt-3 p-3 bg-muted rounded">
-                            <p className="text-sm text-muted-foreground">{task.notes}</p>
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-3">
-                          Created {new Date(task.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditTask(task)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteTask(task.id)}
-                          disabled={deletingTaskId === task.id}
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
       </main>
 
       {/* Create Task Modal */}
@@ -1388,14 +995,14 @@ export default function AdminConsolePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTaskStatus('push_to_account_manager')}
+                    onClick={() => setTaskStatus('push_to_project_manager')}
                     className={`flex-1 p-3 border-2 rounded-lg transition-all ${
-                      taskStatus === 'push_to_account_manager'
+                      taskStatus === 'push_to_project_manager'
                         ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
                         : 'border-border text-muted-foreground hover:border-blue-500/50'
                     }`}
                   >
-                    Push to AM
+                    Push to PM
                   </button>
               </div>
               </div>

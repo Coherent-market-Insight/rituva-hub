@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
       return unauthorizedResponse('User not found');
     }
 
-    // Check if user is admin
+    // Check if user is supervisor
     if (userData.user_role !== 'admin') {
-      return forbiddenResponse('Only admins can access this endpoint');
+      return forbiddenResponse('Only supervisors can access this endpoint');
     }
 
     if (!userData.team) {
@@ -67,4 +67,5 @@ export async function GET(request: NextRequest) {
     return errorResponse('Internal server error', 500);
   }
 }
+
 

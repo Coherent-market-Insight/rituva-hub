@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { LogOut, User, CheckCircle2, Check, FileText, Clock, CheckCircle } from 'lucide-react';
+import { LogOut, User, CheckCircle2, Check, FileText, Clock, CheckCircle, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface Task {
   id: string;
@@ -31,11 +32,14 @@ interface Task {
 }
 
 const teams = [
-  { value: 'website_development', label: 'Website Development' },
-  { value: 'artificial_intelligence', label: 'Artificial Intelligence' },
-  { value: 'market_research', label: 'Market Research' },
+  { value: 'consulting_advisory', label: 'Consulting and Advisory' },
   { value: 'digital_marketing', label: 'Digital Marketing' },
-  { value: 'human_resources', label: 'Human Resources' },
+  { value: 'brand_positioning', label: 'Brand Positioning & Thought Leadership' },
+  { value: 'marketing_technology', label: 'Marketing Technology Integration & Analytics' },
+  { value: 'artificial_intelligence', label: 'Artificial Intelligence Integration' },
+  { value: 'content_marketing', label: 'Content Marketing and Strategy' },
+  { value: 'hr_consulting', label: 'HR Consulting' },
+  { value: 'it_infrastructure', label: 'IT Infrastructure Consulting' },
 ];
 
 const months = [
@@ -54,6 +58,7 @@ export default function ClientConsolePage() {
   const [filterMonth, setFilterMonth] = useState<string>('');
   const [filterWeek, setFilterWeek] = useState<string>('');
   const [filterTeam, setFilterTeam] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   
   // Action state
   const [markingDoneTaskId, setMarkingDoneTaskId] = useState<string | null>(null);
@@ -113,14 +118,14 @@ export default function ClientConsolePage() {
         const data = await res.json();
         const fetchedTasks = data.data || [];
         setAllTasks(fetchedTasks);
-        applyFilters(fetchedTasks, filterMonth, filterWeek, filterTeam);
+        applyFilters(fetchedTasks, filterMonth, filterWeek, filterTeam, searchQuery);
       }
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     }
   };
 
-  const applyFilters = (tasksToFilter: Task[], month: string, week: string, team: string) => {
+  const applyFilters = (tasksToFilter: Task[], month: string, week: string, team: string, search: string) => {
     let filtered = [...tasksToFilter];
     
     if (month) {
@@ -135,15 +140,34 @@ export default function ClientConsolePage() {
       filtered = filtered.filter(task => task.team === team);
     }
     
+    // Search filter - searches title, description, notes, team, month, week
+    if (search.trim()) {
+      const searchLower = search.toLowerCase().trim();
+      filtered = filtered.filter(task => {
+        const titleMatch = task.title?.toLowerCase().includes(searchLower);
+        const descriptionMatch = task.description?.toLowerCase().includes(searchLower);
+        const notesMatch = task.notes?.toLowerCase().includes(searchLower);
+        const teamMatch = task.team?.toLowerCase().includes(searchLower);
+        const teamLabelMatch = getTeamLabel(task.team || '').toLowerCase().includes(searchLower);
+        const monthMatch = task.month?.toLowerCase().includes(searchLower);
+        const weekMatch = task.week?.toLowerCase().includes(searchLower);
+        const creatorMatch = task.creator?.full_name?.toLowerCase().includes(searchLower) || 
+                            task.creator?.email?.toLowerCase().includes(searchLower);
+        
+        return titleMatch || descriptionMatch || notesMatch || teamMatch || teamLabelMatch || 
+               monthMatch || weekMatch || creatorMatch;
+      });
+    }
+    
     setTasks(filtered);
   };
 
   useEffect(() => {
-    if (allTasks.length > 0 || filterMonth || filterWeek || filterTeam) {
-      applyFilters(allTasks, filterMonth, filterWeek, filterTeam);
+    if (allTasks.length > 0 || filterMonth || filterWeek || filterTeam || searchQuery) {
+      applyFilters(allTasks, filterMonth, filterWeek, filterTeam, searchQuery);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterMonth, filterWeek, filterTeam]);
+  }, [filterMonth, filterWeek, filterTeam, searchQuery]);
 
   const handleMarkAsDone = async (taskId: string) => {
     setMarkingDoneTaskId(taskId);
@@ -288,6 +312,35 @@ export default function ClientConsolePage() {
           </div>
         </div>
 
+        {/* Search */}
+        <div className="mb-6">
+          <Label htmlFor="search">Search Tasks</Label>
+          <div className="relative mt-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="search"
+              type="text"
+              placeholder="Search by title, description, notes, team, month..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Found {tasks.length} result{tasks.length !== 1 ? 's' : ''} for "{searchQuery}"
+            </p>
+          )}
+        </div>
+
         {/* Filters */}
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
@@ -352,7 +405,7 @@ export default function ClientConsolePage() {
               ))}
             </select>
           </div>
-          {(filterMonth || filterWeek || filterTeam) && (
+          {(filterMonth || filterWeek || filterTeam || searchQuery) && (
             <div className="flex items-end">
               <Button
                 variant="outline"
@@ -360,10 +413,11 @@ export default function ClientConsolePage() {
                   setFilterMonth('');
                   setFilterWeek('');
                   setFilterTeam('');
+                  setSearchQuery('');
                 }}
                 className="mb-0"
               >
-                Clear Filters
+                Clear All
               </Button>
             </div>
           )}

@@ -32,11 +32,14 @@ interface Task {
 }
 
 const teams = [
-  { value: 'website_development', label: 'Website Development' },
-  { value: 'artificial_intelligence', label: 'Artificial Intelligence' },
-  { value: 'market_research', label: 'Market Research' },
+  { value: 'consulting_advisory', label: 'Consulting and Advisory' },
   { value: 'digital_marketing', label: 'Digital Marketing' },
-  { value: 'human_resources', label: 'Human Resources' },
+  { value: 'brand_positioning', label: 'Brand Positioning & Thought Leadership' },
+  { value: 'marketing_technology', label: 'Marketing Technology Integration & Analytics' },
+  { value: 'artificial_intelligence', label: 'Artificial Intelligence Integration' },
+  { value: 'content_marketing', label: 'Content Marketing and Strategy' },
+  { value: 'hr_consulting', label: 'HR Consulting' },
+  { value: 'it_infrastructure', label: 'IT Infrastructure Consulting' },
 ];
 
 const months = [
@@ -113,7 +116,7 @@ export default function TeamConsolePage() {
         router.push('/auth/select-team');
         return;
       }
-      // If user is admin, redirect to admin console
+      // If user is supervisor, redirect to supervisor console
       if (userData.user_role === 'admin') {
         router.push('/admin-console');
         return;
@@ -654,7 +657,7 @@ export default function TeamConsolePage() {
               <div className="bg-card border-2 border-dashed rounded-lg p-12 text-center">
                 <p className="text-muted-foreground mb-4">No assigned tasks yet</p>
                 <p className="text-sm text-muted-foreground">
-                  Tasks assigned to you by your team admin will appear here
+                  Tasks assigned to you by your supervisor will appear here
                 </p>
               </div>
             ) : (
@@ -670,7 +673,7 @@ export default function TeamConsolePage() {
                           </span>
                           {task.status === 'sent_for_review' && (
                             <span className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-1 rounded font-semibold">
-                              ⚠️ Marked for Review by Admin
+                              ⚠️ Marked for Review by Supervisor
                             </span>
                           )}
                         </div>
@@ -801,7 +804,7 @@ export default function TeamConsolePage() {
                     ))}
                   </select>
                   {isEditingAssignedTask && (
-                    <p className="text-xs text-muted-foreground mt-1">Month and week are set by admin</p>
+                    <p className="text-xs text-muted-foreground mt-1">Month and week are set by supervisor</p>
                   )}
                 </div>
 
