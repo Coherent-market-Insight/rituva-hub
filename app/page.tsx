@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Users, LayoutGrid, Filter, Send } from 'lucide-react';
+import { ArrowRight, Users, LayoutGrid, Filter, Send, FileText, Link as LinkIcon } from 'lucide-react';
 
 export default function Home() {
   const router = useRouter();
@@ -121,7 +121,7 @@ export default function Home() {
           </div>
 
           {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {/* View Assigned Tasks */}
             <div className="group bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -173,6 +173,20 @@ export default function Home() {
               <p className="text-gray-600 text-sm leading-relaxed">Filter tasks by status, date, or type. Find exactly what you need quickly and efficiently.</p>
               <div className="mt-6">
                 <Link href="/auth/signup" className="inline-flex items-center text-amber-600 font-semibold hover:gap-3 transition-all gap-2 text-sm">
+                  Sign Up <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* View Files & Links */}
+            <div className="group bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-600 to-sky-700 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <FileText className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">View Files & Links</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">Download uploaded attachments and click on links directly from task descriptions. All files accessible in one place.</p>
+              <div className="mt-6">
+                <Link href="/auth/signup" className="inline-flex items-center text-cyan-600 font-semibold hover:gap-3 transition-all gap-2 text-sm">
                   Sign Up <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>

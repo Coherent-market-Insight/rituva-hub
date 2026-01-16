@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Plus, X, LogOut, Edit, Trash2, FileText, User as UserIcon, Clock, CheckCircle } from 'lucide-react';
+import { Plus, X, LogOut, Edit, Trash2, FileText, User as UserIcon, Clock, CheckCircle, File as FileIcon, Paperclip, Download } from 'lucide-react';
+import { FileUploadButton } from '@/components/ui/file-upload-button';
+import { linkifyText } from '@/lib/text-utils';
 
 interface Task {
   id: string;
@@ -29,6 +31,14 @@ interface Task {
     email: string;
     full_name: string | null;
   } | null;
+  attachments?: {
+    id: string;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+    file_type: string | null;
+    created_at: string;
+  }[];
 }
 
 const teams = [
@@ -85,6 +95,7 @@ export default function TeamConsolePage() {
   const [selectedWeek, setSelectedWeek] = useState('');
   const [taskStatus, setTaskStatus] = useState<'work_in_progress' | 'completed'>('work_in_progress');
   const [taskNotes, setTaskNotes] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
 
   useEffect(() => {
     fetchUser();
@@ -207,6 +218,25 @@ export default function TeamConsolePage() {
         return;
       }
 
+      const result = await res.json();
+      const taskId = result.data.id;
+
+      // Save file attachments if any
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          await fetch(`/api/tasks/${taskId}/attachments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              fileSize: file.fileSize,
+              fileType: file.fileType || null,
+            }),
+          });
+        }
+      }
+
       toast.success('Task created successfully');
       resetForm();
       setShowAddTask(false);
@@ -273,6 +303,22 @@ export default function TeamConsolePage() {
         return;
       }
 
+      // Save file attachments if any
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          await fetch(`/api/tasks/${editingTask.id}/attachments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              fileSize: file.fileSize,
+              fileType: file.fileType || null,
+            }),
+          });
+        }
+      }
+
       toast.success('Task updated successfully');
       resetForm();
       setEditingTask(null);
@@ -324,6 +370,7 @@ export default function TeamConsolePage() {
     setSelectedWeek('');
     setTaskStatus('work_in_progress');
     setTaskNotes('');
+    setUploadedFiles([]);
     setEditingTask(null);
     setIsEditingAssignedTask(false);
   };
@@ -592,7 +639,7 @@ export default function TeamConsolePage() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg mb-2">{task.title}</h3>
                     {task.description && (
-                      <p className="text-muted-foreground mb-3">{task.description}</p>
+                      <p className="text-muted-foreground mb-3">{linkifyText(task.description)}</p>
                     )}
                     <div className="flex flex-wrap gap-2 items-center">
                       {task.team && (
@@ -617,6 +664,29 @@ export default function TeamConsolePage() {
                     {task.notes && (
                       <div className="mt-3 p-3 bg-muted rounded">
                         <p className="text-sm text-muted-foreground">{task.notes}</p>
+                      </div>
+                    )}
+                    {task.attachments && task.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Paperclip className="w-4 h-4" />
+                          <span>{task.attachments.length} Attachment{task.attachments.length > 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {task.attachments.map((attachment) => (
+                            <a
+                              key={attachment.id}
+                              href={attachment.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 bg-muted/50 rounded hover:bg-muted transition-colors"
+                            >
+                              <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm truncate flex-1">{attachment.file_name}</span>
+                              <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground mt-3">
@@ -678,7 +748,7 @@ export default function TeamConsolePage() {
                           )}
                         </div>
                         {task.description && (
-                          <p className="text-muted-foreground mb-3">{task.description}</p>
+                          <p className="text-muted-foreground mb-3">{linkifyText(task.description)}</p>
                         )}
                         <div className="flex flex-wrap gap-2 items-center mb-3">
                           {task.team && (
@@ -708,6 +778,29 @@ export default function TeamConsolePage() {
                         {task.notes && (
                           <div className="mt-3 p-3 bg-muted rounded">
                             <p className="text-sm text-muted-foreground">{task.notes}</p>
+                          </div>
+                        )}
+                        {task.attachments && task.attachments.length > 0 && (
+                          <div className="mt-3 space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Paperclip className="w-4 h-4" />
+                              <span>{task.attachments.length} Attachment{task.attachments.length > 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="space-y-1">
+                              {task.attachments.map((attachment) => (
+                                <a
+                                  key={attachment.id}
+                                  href={attachment.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 p-2 bg-muted/50 rounded hover:bg-muted transition-colors"
+                                >
+                                  <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                  <span className="text-sm truncate flex-1">{attachment.file_name}</span>
+                                  <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                </a>
+                              ))}
+                            </div>
                           </div>
                         )}
                         <p className="text-xs text-muted-foreground mt-3">
@@ -870,6 +963,40 @@ export default function TeamConsolePage() {
                   value={taskNotes}
                   onChange={(e) => setTaskNotes(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <Label>File Attachments (Optional)</Label>
+                <div className="mt-2">
+                  <FileUploadButton
+                    endpoint="taskAttachment"
+                    onUploadComplete={(files) => {
+                      setUploadedFiles([...uploadedFiles, ...files]);
+                    }}
+                    disabled={isCreatingTask || isUpdatingTask}
+                  />
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-medium">Uploaded Files:</p>
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">{file.fileName}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4 border-t">

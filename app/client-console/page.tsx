@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { LogOut, User, CheckCircle2, Check, FileText, Clock, CheckCircle, Search, X } from 'lucide-react';
+import { LogOut, User, CheckCircle2, Check, FileText, Clock, CheckCircle, Search, X, File as FileIcon, Paperclip, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { FileUploadButton } from '@/components/ui/file-upload-button';
+import { linkifyText } from '@/lib/text-utils';
 
 interface Task {
   id: string;
@@ -29,6 +31,14 @@ interface Task {
     email: string;
     full_name: string | null;
   } | null;
+  attachments?: {
+    id: string;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+    file_type: string | null;
+    created_at: string;
+  }[];
 }
 
 const teams = [
@@ -62,6 +72,7 @@ export default function ClientConsolePage() {
   
   // Action state
   const [markingDoneTaskId, setMarkingDoneTaskId] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
 
   useEffect(() => {
     fetchUser();
@@ -438,7 +449,7 @@ export default function ClientConsolePage() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg mb-2">{task.title}</h3>
                         {task.description && (
-                          <p className="text-muted-foreground mb-3">{task.description}</p>
+                          <p className="text-muted-foreground mb-3">{linkifyText(task.description)}</p>
                         )}
                       </div>
                     </div>
@@ -492,11 +503,34 @@ export default function ClientConsolePage() {
                         <p className="text-sm text-muted-foreground">{task.notes}</p>
                       </div>
                     )}
+                    {task.attachments && task.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Paperclip className="w-4 h-4" />
+                          <span>{task.attachments.length} Attachment{task.attachments.length > 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {task.attachments.map((attachment) => (
+                            <a
+                              key={attachment.id}
+                              href={attachment.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 bg-muted/50 rounded hover:bg-muted transition-colors"
+                            >
+                              <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm truncate flex-1">{attachment.file_name}</span>
+                              <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground mt-3">
                       Created {new Date(task.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  
+
                   <div className="ml-4 flex items-start">
                     {task.status === 'push_to_client' && (
                       <button

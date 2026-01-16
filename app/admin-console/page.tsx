@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { LogOut, User, CheckCircle2, Plus, X, Edit, Trash2, LayoutGrid, List, FileText, Upload, CheckCircle, Eye } from 'lucide-react';
+import { LogOut, User, CheckCircle2, Plus, X, Edit, Trash2, LayoutGrid, List, FileText, Upload, CheckCircle, Eye, Download, File as FileIcon, Paperclip } from 'lucide-react';
+import { FileUploadButton } from '@/components/ui/file-upload-button';
+import { linkifyText } from '@/lib/text-utils';
 
 interface Task {
   id: string;
@@ -34,6 +36,14 @@ interface Task {
     email: string;
     full_name: string | null;
   } | null;
+  attachments?: {
+    id: string;
+    file_name: string;
+    file_url: string;
+    file_size: number;
+    file_type: string | null;
+    created_at: string;
+  }[];
 }
 
 interface TeamUser {
@@ -98,6 +108,7 @@ export default function AdminConsolePage() {
   const [taskStatus, setTaskStatus] = useState<'assigned' | 'push_to_project_manager'>('assigned');
   const [taskNotes, setTaskNotes] = useState('');
   const [assignedToUserIds, setAssignedToUserIds] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   
   // Edit task state
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -229,6 +240,25 @@ export default function AdminConsolePage() {
         return;
       }
 
+      const result = await res.json();
+      const taskId = result.data.id;
+
+      // Save file attachments if any
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          await fetch(`/api/tasks/${taskId}/attachments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              fileSize: file.fileSize,
+              fileType: file.fileType || null,
+            }),
+          });
+        }
+      }
+
       toast.success('Task created successfully');
       resetCreateTaskForm();
       setShowCreateTask(false);
@@ -289,6 +319,22 @@ export default function AdminConsolePage() {
         return;
       }
 
+      // Save file attachments if any
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          await fetch(`/api/tasks/${editingTask.id}/attachments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.fileName,
+              fileUrl: file.fileUrl,
+              fileSize: file.fileSize,
+              fileType: file.fileType || null,
+            }),
+          });
+        }
+      }
+
       toast.success('Task updated successfully');
       resetCreateTaskForm();
       setEditingTask(null);
@@ -338,6 +384,7 @@ export default function AdminConsolePage() {
     setTaskStatus('assigned');
     setTaskNotes('');
     setAssignedToUserIds([]);
+    setUploadedFiles([]);
     setEditingTask(null);
   };
 
@@ -630,7 +677,7 @@ export default function AdminConsolePage() {
                         <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                         {task.description && (
                           <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {task.description}
+                            {linkifyText(task.description)}
                           </p>
                         )}
                         <div className="flex flex-wrap gap-1 mb-2">
@@ -689,7 +736,7 @@ export default function AdminConsolePage() {
                         <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                         {task.description && (
                           <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {task.description}
+                            {linkifyText(task.description)}
                           </p>
                         )}
                         <div className="flex flex-wrap gap-1 mb-2">
@@ -748,7 +795,7 @@ export default function AdminConsolePage() {
                         <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                         {task.description && (
                           <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                            {task.description}
+                            {linkifyText(task.description)}
                           </p>
                         )}
                         <div className="flex flex-wrap gap-1 mb-2">
@@ -801,7 +848,7 @@ export default function AdminConsolePage() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg mb-2">{task.title}</h3>
                         {task.description && (
-                          <p className="text-muted-foreground mb-3">{task.description}</p>
+                          <p className="text-muted-foreground mb-3">{linkifyText(task.description)}</p>
                         )}
                       </div>
                     </div>
@@ -864,6 +911,29 @@ export default function AdminConsolePage() {
                     {task.notes && (
                       <div className="mt-3 p-3 bg-muted rounded">
                         <p className="text-sm text-muted-foreground">{task.notes}</p>
+                      </div>
+                    )}
+                    {task.attachments && task.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Paperclip className="w-4 h-4" />
+                          <span>{task.attachments.length} Attachment{task.attachments.length > 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="space-y-1">
+                          {task.attachments.map((attachment) => (
+                            <a
+                              key={attachment.id}
+                              href={attachment.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 p-2 bg-muted/50 rounded hover:bg-muted transition-colors"
+                            >
+                              <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-sm truncate flex-1">{attachment.file_name}</span>
+                              <Download className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                     <p className="text-xs text-muted-foreground mt-3">
@@ -1046,6 +1116,40 @@ export default function AdminConsolePage() {
                   value={taskNotes}
                   onChange={(e) => setTaskNotes(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <Label>File Attachments (Optional)</Label>
+                <div className="mt-2">
+                  <FileUploadButton
+                    endpoint="taskAttachment"
+                    onUploadComplete={(files) => {
+                      setUploadedFiles([...uploadedFiles, ...files]);
+                    }}
+                    disabled={isCreatingTask || isUpdatingTask}
+                  />
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-medium">Uploaded Files:</p>
+                    {uploadedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm">{file.fileName}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4 border-t">

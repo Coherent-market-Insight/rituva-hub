@@ -157,11 +157,12 @@ model Task {
   updated_at   DateTime    @updatedAt
 
   // Relations
-  board        Board         @relation(fields: [board_id], references: [id], onDelete: Cascade)
-  creator      User?         @relation("TaskCreator", fields: [created_by], references: [id])
-  assignee     User?         @relation("TaskAssignee", fields: [assigned_to], references: [id])
+  board        Board            @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  creator      User?            @relation("TaskCreator", fields: [created_by], references: [id])
+  assignee     User?            @relation("TaskAssignee", fields: [assigned_to], references: [id])
   comments     TaskComment[]
   messages     Message[]
+  attachments  TaskAttachment[]
 
   @@map("tasks")
 }
@@ -180,6 +181,23 @@ model TaskComment {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("task_comments")
+}
+
+// Task Attachments (Files uploaded to tasks)
+model TaskAttachment {
+  id           String   @id @default(cuid())
+  task_id      String
+  file_name    String
+  file_url     String
+  file_size    Int      // in bytes
+  file_type    String?  // mime type: image/png, application/pdf, etc.
+  uploaded_by  String
+  created_at   DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [task_id], references: [id], onDelete: Cascade)
+
+  @@map("task_attachments")
 }
 
 // Team Chat Messages

@@ -62,6 +62,19 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        attachments: {
+          select: {
+            id: true,
+            file_name: true,
+            file_url: true,
+            file_size: true,
+            file_type: true,
+            created_at: true,
+          },
+          orderBy: {
+            created_at: 'desc',
+          },
+        },
       },
       orderBy: {
         created_at: 'desc',
