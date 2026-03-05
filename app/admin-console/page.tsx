@@ -69,15 +69,35 @@ const months = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Generate weeks for a month (simplified - you may want to make this more dynamic)
 const generateWeeks = (month: string) => {
-  return [
-    `Week 1 (Dec 28 - Jan 3)`,
-    `Week 2 (Jan 4 - Jan 10)`,
-    `Week 3 (Jan 11 - Jan 17)`,
-    `Week 4 (Jan 18 - Jan 24)`,
-    `Week 5 (Jan 25 - Jan 31)`,
-  ];
+  const monthIndex = months.indexOf(month);
+  if (monthIndex === -1) return [];
+
+  const year = new Date().getFullYear();
+  const firstDay = new Date(year, monthIndex, 1);
+  const lastDay = new Date(year, monthIndex + 1, 0);
+
+  const shortMonth = (d: Date) =>
+    d.toLocaleString('en-US', { month: 'short' });
+  const weeks: string[] = [];
+  let weekStart = new Date(firstDay);
+
+  let weekNum = 1;
+  while (weekStart <= lastDay) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    const cappedEnd = weekEnd > lastDay ? lastDay : weekEnd;
+
+    weeks.push(
+      `Week ${weekNum} (${shortMonth(weekStart)} ${weekStart.getDate()} - ${shortMonth(cappedEnd)} ${cappedEnd.getDate()})`
+    );
+
+    weekStart = new Date(cappedEnd);
+    weekStart.setDate(cappedEnd.getDate() + 1);
+    weekNum++;
+  }
+
+  return weeks;
 };
 
 export default function AdminConsolePage() {

@@ -37,9 +37,8 @@ export async function POST(
       return notFoundResponse('Task not found');
     }
 
-    // Verify task status is push_to_account_manager or sent_for_review
-    if (task.status !== 'push_to_account_manager' && task.status !== 'sent_for_review') {
-      return errorResponse('Task must be in "Push to Account Manager" or "Sent for Review" status to push to client', 400);
+    if (task.status === 'push_to_client') {
+      return errorResponse('Task is already pushed to client', 400);
     }
 
     // Update task status to push_to_client
